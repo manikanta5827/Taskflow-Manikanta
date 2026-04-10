@@ -10,11 +10,10 @@ export const connInfoMiddleware = createMiddleware<{ Variables: AppVariables }>(
   } catch (e) {
     // info will be undefined
   }
-  
+
   // Extract IP, prioritizing headers if behind a proxy, otherwise real ip
-  const ip = c.req.header('x-forwarded-for')?.split(',')[0].trim() 
-             || info?.remote?.address 
-             || 'unknown';
+  const ip =
+    c.req.header('x-forwarded-for')?.split(',')[0].trim() || info?.remote?.address || 'unknown';
 
   c.set('clientIp', ip);
   await next();
