@@ -1,6 +1,6 @@
-import { userRepository } from '../repositories/userRepository.js';
-import { signToken } from '../utils/jwt.js';
-import { ValidationError, UnauthenticatedError } from '../utils/errors.js';
+import { userRepository } from '../repositories/userRepository';
+import { signToken } from '../utils/jwt';
+import { ValidationError, UnauthenticatedError } from '../utils/errors';
 
 export const authService = {
   async register(data: any) {
@@ -20,7 +20,7 @@ export const authService = {
       role: 'MEMBER',
     });
 
-    const token = signToken({ userId: user.id, email: user.email });
+    const token = await signToken({ userId: user.id, email: user.email });
 
     const { password, ...userWithoutPassword } = user;
     return { token, user: userWithoutPassword };
@@ -37,7 +37,7 @@ export const authService = {
       throw new UnauthenticatedError('invalid credentials');
     }
 
-    const token = signToken({ userId: user.id, email: user.email });
+    const token = await signToken({ userId: user.id, email: user.email });
 
     const { password, ...userWithoutPassword } = user;
     return { token, user: userWithoutPassword };

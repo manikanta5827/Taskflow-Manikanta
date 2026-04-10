@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
-import { logger } from './config/logger.js';
-import { env } from './config/env.js';
-import { errorHandler } from './middleware/errorHandler.js';
-import { routes } from './routes/index.js';
+import { logger } from './config/logger';
+import { env } from './config/env';
+import { errorHandler } from './middleware/errorHandler';
+import { routes } from './routes/index';
 
 const app = new Hono();
 

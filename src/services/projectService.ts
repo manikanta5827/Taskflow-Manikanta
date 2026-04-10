@@ -1,6 +1,6 @@
-import { projectRepository } from '../repositories/projectRepository.js';
-import { auditService } from './auditService.js';
-import { NotFoundError } from '../utils/errors.js';
+import { projectRepository } from '../repositories/projectRepository';
+import { auditService } from './auditService';
+import { NotFoundError } from '../utils/errors';
 
 export const projectService = {
   async listProjects(userId: string) {

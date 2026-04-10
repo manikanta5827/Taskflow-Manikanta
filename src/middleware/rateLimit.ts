@@ -1,5 +1,5 @@
 import { Context, Next } from 'hono';
-import { RateLimitError } from '../utils/errors.js';
+import { RateLimitError } from '../utils/errors';
 
 interface RequestLog {
   timestamp: number;

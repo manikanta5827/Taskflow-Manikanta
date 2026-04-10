@@ -1,5 +1,5 @@
-import { auditLogRepository } from '../repositories/auditLogRepository.js';
-import { logger } from '../config/logger.js';
+import { auditLogRepository } from '../repositories/auditLogRepository';
+import { logger } from '../config/logger';
 
 export const auditService = {
   logAction(data: {

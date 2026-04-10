@@ -1,6 +1,6 @@
 import { Context, Next } from 'hono';
-import { idempotencyRepository } from '../repositories/idempotencyRepository.js';
-import { logger } from '../config/logger.js';
+import { idempotencyRepository } from '../repositories/idempotencyRepository';
+import { logger } from '../config/logger';
 
 export const idempotencyMiddleware = async (c: Context, next: Next) => {
   if (c.req.method !== 'POST' && c.req.method !== 'PATCH') {

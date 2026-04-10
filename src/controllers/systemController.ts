@@ -1,6 +1,6 @@
 import { Context } from 'hono';
-import { systemService } from '../services/systemService.js';
-import { auditLogRepository } from '../repositories/auditLogRepository.js';
+import { systemService } from '../services/systemService';
+import { auditLogRepository } from '../repositories/auditLogRepository';
 
 export const systemController = {
   async health(c: Context) {

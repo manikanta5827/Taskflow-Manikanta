@@ -1,6 +1,6 @@
 import { Context } from 'hono';
-import { AppError } from '../utils/errors.js';
-import { logger } from '../config/logger.js';
+import { AppError } from '../utils/errors';
+import { logger } from '../config/logger';
 import { ZodError } from 'zod';
 
 export const errorHandler = (err: Error, c: Context) => {

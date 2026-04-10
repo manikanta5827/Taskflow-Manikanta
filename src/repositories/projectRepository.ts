@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import { prisma } from '../config/prisma.js';
+import { prisma } from '../config/prisma';
 
 export const projectRepository = {
   async create(data: Prisma.ProjectUncheckedCreateInput) {

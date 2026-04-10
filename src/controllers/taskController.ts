@@ -1,6 +1,6 @@
 import { Context } from 'hono';
-import { taskService } from '../services/taskService.js';
-import { auditLogRepository } from '../repositories/auditLogRepository.js';
+import { taskService } from '../services/taskService';
+import { auditLogRepository } from '../repositories/auditLogRepository';
 import { z } from 'zod';
 
 const createTaskSchema = z.object({

@@ -1,15 +1,29 @@
-import jwt from 'jsonwebtoken';
-import { env } from '../config/env.js';
+import { sign, verify } from 'hono/jwt';
+import { env } from '../config/env';
 
 export interface JwtPayload {
   userId: string;
   email: string;
 }
 
-export function signToken(payload: JwtPayload): string {
-  return jwt.sign(payload, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRY as any });
+function parseExpiry(expiryString: string): number {
+  const match = expiryString.match(/^(\d+)(h|m|d|s)$/);
+  if (!match) return 24 * 60 * 60; // default 24 hours
+  const value = parseInt(match[1], 10);
+  const unit = match[2];
+  if (unit === 'h') return value * 60 * 60;
+  if (unit === 'm') return value * 60;
+  if (unit === 's') return value;
+  if (unit === 'd') return value * 24 * 60 * 60;
+  return 24 * 60 * 60;
 }
 
-export function verifyToken(token: string): JwtPayload {
-  return jwt.verify(token, env.JWT_SECRET) as JwtPayload;
+export async function signToken(payload: JwtPayload): Promise<string> {
+  const expTime = parseExpiry(env.JWT_EXPIRY);
+  const exp = Math.floor(Date.now() / 1000) + expTime;
+  return sign({ ...payload, exp }, env.JWT_SECRET, 'HS256');
+}
+
+export async function verifyToken(token: string): Promise<JwtPayload> {
+  return (await verify(token, env.JWT_SECRET, 'HS256')) as unknown as JwtPayload;
 }

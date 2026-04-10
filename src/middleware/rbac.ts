@@ -1,7 +1,7 @@
 import { Context, Next } from 'hono';
-import { ForbiddenError } from '../utils/errors.js';
-import { projectRepository } from '../repositories/projectRepository.js';
-import { taskRepository } from '../repositories/taskRepository.js';
+import { ForbiddenError } from '../utils/errors';
+import { projectRepository } from '../repositories/projectRepository';
+import { taskRepository } from '../repositories/taskRepository';
 
 export const requireRole = (roles: string[]) => {
   return async (c: Context, next: Next) => {

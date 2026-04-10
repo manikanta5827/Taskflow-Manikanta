@@ -1,8 +1,8 @@
-import { taskRepository } from '../repositories/taskRepository.js';
-import { userRepository } from '../repositories/userRepository.js';
-import { auditService } from './auditService.js';
-import { emailService } from './emailService.js';
-import { NotFoundError } from '../utils/errors.js';
+import { taskRepository } from '../repositories/taskRepository';
+import { userRepository } from '../repositories/userRepository';
+import { auditService } from './auditService';
+import { emailService } from './emailService';
+import { NotFoundError } from '../utils/errors';
 
 export const taskService = {
   async listTasks(projectId: string, filters: any) {

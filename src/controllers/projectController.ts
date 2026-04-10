@@ -1,5 +1,5 @@
 import { Context } from 'hono';
-import { projectService } from '../services/projectService.js';
+import { projectService } from '../services/projectService';
 import { z } from 'zod';
 
 const createProjectSchema = z.object({

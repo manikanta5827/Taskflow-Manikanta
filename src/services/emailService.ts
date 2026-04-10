@@ -1,4 +1,4 @@
-import { logger } from '../config/logger.js';
+import { logger } from '../config/logger';
 
 export const emailService = {
   async sendTaskAssigned(email: string, taskTitle: string) {

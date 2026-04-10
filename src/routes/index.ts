@@ -1,13 +1,13 @@
 import { Hono } from 'hono';
-import { authController } from '../controllers/authController.js';
-import { projectController } from '../controllers/projectController.js';
-import { taskController } from '../controllers/taskController.js';
-import { systemController } from '../controllers/systemController.js';
-import { authMiddleware } from '../middleware/auth.js';
-import { requireRole, requireProjectOwner, requireTaskAccess } from '../middleware/rbac.js';
-import { rateLimitAuth, rateLimitTask, rateLimitGeneral } from '../middleware/rateLimit.js';
-import { idempotencyMiddleware } from '../middleware/idempotency.js';
-import { AppVariables } from '../types/index.js';
+import { authController } from '../controllers/authController';
+import { projectController } from '../controllers/projectController';
+import { taskController } from '../controllers/taskController';
+import { systemController } from '../controllers/systemController';
+import { authMiddleware } from '../middleware/auth';
+import { requireRole, requireProjectOwner, requireTaskAccess } from '../middleware/rbac';
+import { rateLimitAuth, rateLimitTask, rateLimitGeneral } from '../middleware/rateLimit';
+import { idempotencyMiddleware } from '../middleware/idempotency';
+import { AppVariables } from '../types/index';
 
 export const routes = new Hono<{ Variables: AppVariables }>();
 

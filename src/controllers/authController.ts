@@ -1,5 +1,5 @@
 import { Context } from 'hono';
-import { authService } from '../services/authService.js';
+import { authService } from '../services/authService';
 import { z } from 'zod';
 
 const registerSchema = z.object({
