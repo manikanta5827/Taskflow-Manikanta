@@ -31,15 +31,12 @@ model User {
   password  String
   role      Role      @default(MEMBER)
   createdAt DateTime  @default(now())
-  deletedAt DateTime?
-
   projectsOwned   Project[]        @relation("ProjectOwner")
   tasksAssigned   Task[]           @relation("TaskAssignee")
   auditLogs       AuditLog[]
   idempotencyKeys IdempotencyKey[]
 
   @@index([email])
-  @@index([deletedAt])
   @@map("users")
 }
 
@@ -49,13 +46,10 @@ model Project {
   description String?
   ownerId     String    @db.Uuid
   createdAt   DateTime  @default(now())
-  deletedAt   DateTime?
-
   owner User   @relation("ProjectOwner", fields: [ownerId], references: [id])
   tasks Task[]
 
   @@index([ownerId])
-  @@index([deletedAt])
   @@map("projects")
 }
 
@@ -70,14 +64,11 @@ model Task {
   dueDate     DateTime?    @db.Date
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
-  deletedAt   DateTime?
-
   project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   assignee User?   @relation("TaskAssignee", fields: [assigneeId], references: [id])
 
   @@index([projectId, status])
   @@index([assigneeId])
-  @@index([deletedAt])
   @@map("tasks")
 }
 

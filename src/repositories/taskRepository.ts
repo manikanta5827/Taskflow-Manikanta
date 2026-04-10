@@ -6,13 +6,6 @@ export const taskRepository = {
     return prisma.task.create({ data });
   },
 
-  async findActiveById(id: string) {
-    return prisma.task.findFirst({
-      where: { id, deletedAt: null },
-      include: { project: true },
-    });
-  },
-
   async findById(id: string) {
     return prisma.task.findUnique({
       where: { id },
@@ -20,13 +13,12 @@ export const taskRepository = {
     });
   },
 
-  async findActiveByProject(
+  async findByProject(
     projectId: string,
     filters: { status?: any; assigneeId?: string; search?: string }
   ) {
     const where: Prisma.TaskWhereInput = {
       projectId,
-      deletedAt: null,
     };
 
     if (filters.status) where.status = filters.status;
@@ -46,18 +38,9 @@ export const taskRepository = {
     });
   },
 
-  async softDelete(id: string) {
-    return prisma.task.update({
+  async remove(id: string) {
+    return prisma.task.delete({
       where: { id },
-      data: { deletedAt: new Date() },
-      include: { project: true },
-    });
-  },
-
-  async restore(id: string) {
-    return prisma.task.update({
-      where: { id },
-      data: { deletedAt: null },
       include: { project: true },
     });
   },

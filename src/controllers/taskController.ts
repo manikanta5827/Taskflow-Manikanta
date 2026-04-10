@@ -64,16 +64,8 @@ export const taskController = {
     const user = c.get('user');
     const { id } = paramsIdSchema.parse(c.req.param());
     const ip = c.get('clientIp');
-    await taskService.softDeleteTask(user.id, id, ip);
+    await taskService.deleteTask(user.id, id, ip);
     return new Response(null, { status: 204 });
-  },
-
-  async restore(c: Context) {
-    const user = c.get('user');
-    const { id } = paramsIdSchema.parse(c.req.param());
-    const ip = c.get('clientIp');
-    await taskService.restoreTask(user.id, id, ip);
-    return c.json({ success: true });
   },
 
   async getLogs(c: Context) {

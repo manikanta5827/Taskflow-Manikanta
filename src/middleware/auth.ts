@@ -13,7 +13,7 @@ export const authMiddleware = async (c: Context, next: Next) => {
   const token = authHeader.split(' ')[1];
   try {
     const payload = await verifyToken(token);
-    const user = await userRepository.findActiveById(payload.userId);
+    const user = await userRepository.findById(payload.userId);
 
     if (!user) {
       throw new UnauthenticatedError();

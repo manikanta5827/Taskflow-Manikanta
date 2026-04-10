@@ -7,14 +7,14 @@ export const userRepository = {
   },
 
   async findByEmail(email: string) {
-    return prisma.user.findFirst({
-      where: { email, deletedAt: null },
+    return prisma.user.findUnique({
+      where: { email },
     });
   },
 
-  async findActiveById(id: string) {
-    return prisma.user.findFirst({
-      where: { id, deletedAt: null },
+  async findById(id: string) {
+    return prisma.user.findUnique({
+      where: { id },
     });
   },
 };

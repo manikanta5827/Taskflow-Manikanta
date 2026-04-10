@@ -22,8 +22,7 @@ const protectedPaths = [
   '/projects/*',
   '/tasks',
   '/tasks/*',
-  '/audit-logs',
-  '/audit-logs/*',
+  '/audit-logs'
 ];
 
 protectedPaths.forEach((path) => {
@@ -37,12 +36,10 @@ routes.post('/projects', projectController.create);
 routes.get('/projects/:id', projectController.get);
 routes.patch('/projects/:id', requireProjectOwner, projectController.update);
 routes.delete('/projects/:id', requireProjectOwner, projectController.remove);
-routes.post('/projects/:id/restore', requireProjectOwner, projectController.restore);
 
 routes.get('/projects/:id/tasks', taskController.list);
 routes.post('/projects/:id/tasks', rateLimitTask, requireProjectOwner, taskController.create);
 
 routes.patch('/tasks/:id', requireTaskAccess, taskController.update);
 routes.delete('/tasks/:id', requireTaskAccess, taskController.remove);
-routes.post('/tasks/:id/restore', requireTaskAccess, taskController.restore);
 routes.get('/tasks/:id/logs', requireTaskAccess, taskController.getLogs);

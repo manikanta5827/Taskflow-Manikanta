@@ -6,7 +6,7 @@ import { NotFoundError } from '../utils/errors';
 
 export const taskService = {
   async listTasks(projectId: string, filters: any) {
-    return taskRepository.findActiveByProject(projectId, filters);
+    return taskRepository.findByProject(projectId, filters);
   },
 
   async createTask(userId: string, projectId: string, data: any, ipAddress: string) {
@@ -28,7 +28,7 @@ export const taskService = {
     });
 
     if (task.assigneeId) {
-      const assignee = await userRepository.findActiveById(task.assigneeId);
+      const assignee = await userRepository.findById(task.assigneeId);
       if (assignee) {
         emailService.sendTaskAssigned(assignee.email, task.title);
       }
@@ -38,7 +38,7 @@ export const taskService = {
   },
 
   async updateTask(userId: string, id: string, data: any, ipAddress: string) {
-    const existing = await taskRepository.findActiveById(id);
+    const existing = await taskRepository.findById(id);
     if (!existing) throw new NotFoundError();
 
     const task = await taskRepository.update(id, data);
@@ -63,7 +63,7 @@ export const taskService = {
       }
 
       if (task.assigneeId) {
-        const assignee = await userRepository.findActiveById(task.assigneeId);
+        const assignee = await userRepository.findById(task.assigneeId);
         if (assignee) {
           emailService.sendStatusChanged(assignee.email, task.title, task.status);
         }
@@ -78,7 +78,7 @@ export const taskService = {
         entityId: task.id,
         ipAddress,
       });
-      const assignee = await userRepository.findActiveById(data.assigneeId);
+      const assignee = await userRepository.findById(data.assigneeId);
       if (assignee) {
         emailService.sendTaskAssigned(assignee.email, task.title);
       }
@@ -87,32 +87,15 @@ export const taskService = {
     return task;
   },
 
-  async softDeleteTask(userId: string, id: string, ipAddress: string) {
-    const existing = await taskRepository.findActiveById(id);
+  async deleteTask(userId: string, id: string, ipAddress: string) {
+    const existing = await taskRepository.findById(id);
     if (!existing) throw new NotFoundError();
 
-    await taskRepository.softDelete(id);
+    await taskRepository.remove(id);
 
     auditService.logAction({
       userId,
       action: 'task.deleted',
-      entityType: 'task',
-      entityId: id,
-      ipAddress,
-    });
-
-    return { success: true };
-  },
-
-  async restoreTask(userId: string, id: string, ipAddress: string) {
-    const existing = await taskRepository.findById(id);
-    if (!existing) throw new NotFoundError();
-
-    await taskRepository.restore(id);
-
-    auditService.logAction({
-      userId,
-      action: 'task.restored',
       entityType: 'task',
       entityId: id,
       ipAddress,

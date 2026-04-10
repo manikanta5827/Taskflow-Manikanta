@@ -52,15 +52,7 @@ export const projectController = {
     const user = c.get('user');
     const { id } = paramsIdSchema.parse(c.req.param());
     const ip = c.get('clientIp');
-    await projectService.softDeleteProject(user.id, id, ip);
+    await projectService.deleteProject(user.id, id, ip);
     return new Response(null, { status: 204 });
-  },
-
-  async restore(c: Context) {
-    const user = c.get('user');
-    const { id } = paramsIdSchema.parse(c.req.param());
-    const ip = c.get('clientIp');
-    await projectService.restoreProject(user.id, id, ip);
-    return c.json({ success: true });
   },
 };

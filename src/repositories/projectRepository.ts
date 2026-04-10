@@ -6,24 +6,17 @@ export const projectRepository = {
     return prisma.project.create({ data });
   },
 
-  async findActiveById(id: string) {
-    return prisma.project.findFirst({
-      where: { id, deletedAt: null },
-      include: { tasks: { where: { deletedAt: null } } },
-    });
-  },
-
   async findById(id: string) {
     return prisma.project.findUnique({
       where: { id },
+      include: { tasks: true },
     });
   },
 
-  async findActiveForUser(userId: string) {
+  async findForUser(userId: string) {
     return prisma.project.findMany({
       where: {
-        deletedAt: null,
-        OR: [{ ownerId: userId }, { tasks: { some: { assigneeId: userId, deletedAt: null } } }],
+        OR: [{ ownerId: userId }, { tasks: { some: { assigneeId: userId } } }],
       },
     });
   },
@@ -35,17 +28,9 @@ export const projectRepository = {
     });
   },
 
-  async softDelete(id: string) {
-    return prisma.project.update({
+  async remove(id: string) {
+    return prisma.project.delete({
       where: { id },
-      data: { deletedAt: new Date() },
-    });
-  },
-
-  async restore(id: string) {
-    return prisma.project.update({
-      where: { id },
-      data: { deletedAt: null },
     });
   },
 };

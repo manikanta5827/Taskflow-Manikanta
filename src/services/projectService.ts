@@ -4,11 +4,11 @@ import { NotFoundError } from '../utils/errors';
 
 export const projectService = {
   async listProjects(userId: string) {
-    return projectRepository.findActiveForUser(userId);
+    return projectRepository.findForUser(userId);
   },
 
   async getProject(id: string) {
-    const project = await projectRepository.findActiveById(id);
+    const project = await projectRepository.findById(id);
     if (!project) throw new NotFoundError();
     return project;
   },
@@ -40,7 +40,7 @@ export const projectService = {
     data: { name?: string; description?: string },
     ipAddress: string
   ) {
-    const existing = await projectRepository.findActiveById(id);
+    const existing = await projectRepository.findById(id);
     if (!existing) throw new NotFoundError();
 
     const project = await projectRepository.update(id, data);
@@ -56,32 +56,15 @@ export const projectService = {
     return project;
   },
 
-  async softDeleteProject(userId: string, id: string, ipAddress: string) {
-    const existing = await projectRepository.findActiveById(id);
+  async deleteProject(userId: string, id: string, ipAddress: string) {
+    const existing = await projectRepository.findById(id);
     if (!existing) throw new NotFoundError();
 
-    await projectRepository.softDelete(id);
+    await projectRepository.remove(id);
 
     auditService.logAction({
       userId,
       action: 'project.deleted',
-      entityType: 'project',
-      entityId: id,
-      ipAddress,
-    });
-
-    return { success: true };
-  },
-
-  async restoreProject(userId: string, id: string, ipAddress: string) {
-    const existing = await projectRepository.findById(id);
-    if (!existing) throw new NotFoundError();
-
-    await projectRepository.restore(id);
-
-    auditService.logAction({
-      userId,
-      action: 'project.restored',
       entityType: 'project',
       entityId: id,
       ipAddress,
