@@ -16,7 +16,19 @@ routes.post('/auth/login', rateLimitAuth, authController.login);
 
 routes.get('/health', systemController.health);
 
-routes.use('/*', authMiddleware, rateLimitGeneral, idempotencyMiddleware);
+// Protected routes - Apply middleware ONLY to these paths
+const protectedPaths = [
+  '/projects',
+  '/projects/*',
+  '/tasks',
+  '/tasks/*',
+  '/audit-logs',
+  '/audit-logs/*',
+];
+
+protectedPaths.forEach((path) => {
+  routes.use(path, authMiddleware, rateLimitGeneral, idempotencyMiddleware);
+});
 
 routes.get('/audit-logs', requireRole(['ADMIN']), systemController.getAuditLogs);
 

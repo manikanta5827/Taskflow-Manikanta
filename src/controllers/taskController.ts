@@ -31,7 +31,7 @@ export const taskController = {
     const projectId = c.req.param('id') as string;
     const body = await c.req.json();
     const data = createTaskSchema.parse(body);
-    const ip = c.req.header('x-forwarded-for') || 'unknown';
+    const ip = c.get('clientIp');
     const task = await taskService.createTask(user.id, projectId, data, ip);
     return c.json(task, 201);
   },
@@ -41,7 +41,7 @@ export const taskController = {
     const id = c.req.param('id') as string;
     const body = await c.req.json();
     const data = updateTaskSchema.parse(body);
-    const ip = c.req.header('x-forwarded-for') || 'unknown';
+    const ip = c.get('clientIp');
     const task = await taskService.updateTask(user.id, id, data, ip);
     return c.json(task);
   },
@@ -49,7 +49,7 @@ export const taskController = {
   async remove(c: Context) {
     const user = c.get('user');
     const id = c.req.param('id') as string;
-    const ip = c.req.header('x-forwarded-for') || 'unknown';
+    const ip = c.get('clientIp');
     await taskService.softDeleteTask(user.id, id, ip);
     return new Response(null, { status: 204 });
   },
@@ -57,7 +57,7 @@ export const taskController = {
   async restore(c: Context) {
     const user = c.get('user');
     const id = c.req.param('id') as string;
-    const ip = c.req.header('x-forwarded-for') || 'unknown';
+    const ip = c.get('clientIp');
     await taskService.restoreTask(user.id, id, ip);
     return c.json({ success: true });
   },

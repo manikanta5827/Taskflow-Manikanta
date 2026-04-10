@@ -29,7 +29,7 @@ export const projectController = {
     const user = c.get('user');
     const body = await c.req.json();
     const data = createProjectSchema.parse(body);
-    const ip = c.req.header('x-forwarded-for') || 'unknown';
+    const ip = c.get('clientIp');
     const project = await projectService.createProject(user.id, data, ip);
     return c.json(project, 201);
   },
@@ -39,7 +39,7 @@ export const projectController = {
     const id = c.req.param('id') as string;
     const body = await c.req.json();
     const data = updateProjectSchema.parse(body);
-    const ip = c.req.header('x-forwarded-for') || 'unknown';
+    const ip = c.get('clientIp');
     const project = await projectService.updateProject(user.id, id, data, ip);
     return c.json(project);
   },
@@ -47,7 +47,7 @@ export const projectController = {
   async remove(c: Context) {
     const user = c.get('user');
     const id = c.req.param('id') as string;
-    const ip = c.req.header('x-forwarded-for') || 'unknown';
+    const ip = c.get('clientIp');
     await projectService.softDeleteProject(user.id, id, ip);
     return new Response(null, { status: 204 });
   },
@@ -55,7 +55,7 @@ export const projectController = {
   async restore(c: Context) {
     const user = c.get('user');
     const id = c.req.param('id') as string;
-    const ip = c.req.header('x-forwarded-for') || 'unknown';
+    const ip = c.get('clientIp');
     await projectService.restoreProject(user.id, id, ip);
     return c.json({ success: true });
   },
