@@ -17,7 +17,7 @@ export const authService = {
     const user = await userRepository.create({
       ...data,
       password: hashedPassword,
-      role: 'MEMBER',
+      role: data.role || 'MEMBER',
     });
 
     const token = await signToken({ userId: user.id, email: user.email });

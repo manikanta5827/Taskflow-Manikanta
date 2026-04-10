@@ -87,7 +87,6 @@ model AuditLog {
   action     String
   entityType String
   entityId   String   @db.Uuid
-  changes    Json?
   ipAddress  String?
   timestamp  DateTime @default(now())
 

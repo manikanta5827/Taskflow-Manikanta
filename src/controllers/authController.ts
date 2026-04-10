@@ -6,6 +6,7 @@ const registerSchema = z.object({
   name: z.string().min(1),
   email: z.string().trim().toLowerCase().email(),
   password: z.string().min(8),
+  role: z.enum(['ADMIN', 'OWNER', 'MEMBER']).optional(),
 });
 
 const loginSchema = z.object({

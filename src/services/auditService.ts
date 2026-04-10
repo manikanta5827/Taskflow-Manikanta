@@ -7,7 +7,6 @@ export const auditService = {
     action: string;
     entityType: string;
     entityId: string;
-    changes?: any;
     ipAddress?: string;
   }) {
     auditLogRepository.create(data).catch((error) => {

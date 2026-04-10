@@ -13,6 +13,10 @@ export const taskService = {
     const task = await taskRepository.create({
       ...data,
       projectId,
+      assigneeId: userId,
+      status: 'TODO',
+      priority: 'MEDIUM',
+      dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
     });
 
     auditService.logAction({
@@ -39,15 +43,6 @@ export const taskService = {
 
     const task = await taskRepository.update(id, data);
 
-    auditService.logAction({
-      userId,
-      action: 'task.updated',
-      entityType: 'task',
-      entityId: id,
-      changes: { before: existing, after: task },
-      ipAddress,
-    });
-
     if (data.status && data.status !== existing.status) {
       if (data.status === 'DONE') {
         auditService.logAction({
@@ -55,6 +50,14 @@ export const taskService = {
           action: 'task.status.done',
           entityType: 'task',
           entityId: task.id,
+          ipAddress,
+        });
+      } else {
+        auditService.logAction({
+          userId,
+          action: 'task.updated',
+          entityType: 'task',
+          entityId: id,
           ipAddress,
         });
       }
@@ -73,7 +76,6 @@ export const taskService = {
         action: 'task.reassigned',
         entityType: 'task',
         entityId: task.id,
-        changes: { before: existing.assigneeId, after: data.assigneeId },
         ipAddress,
       });
       const assignee = await userRepository.findActiveById(data.assigneeId);

@@ -12,6 +12,10 @@ const updateProjectSchema = z.object({
   description: z.string().optional(),
 });
 
+const paramsIdSchema = z.object({
+  id: z.string().uuid(),
+});
+
 export const projectController = {
   async list(c: Context) {
     const user = c.get('user');
@@ -20,7 +24,7 @@ export const projectController = {
   },
 
   async get(c: Context) {
-    const id = c.req.param('id') as string;
+    const { id } = paramsIdSchema.parse(c.req.param());
     const project = await projectService.getProject(id);
     return c.json(project);
   },
@@ -36,7 +40,7 @@ export const projectController = {
 
   async update(c: Context) {
     const user = c.get('user');
-    const id = c.req.param('id') as string;
+    const { id } = paramsIdSchema.parse(c.req.param());
     const body = await c.req.json();
     const data = updateProjectSchema.parse(body);
     const ip = c.get('clientIp');
@@ -46,7 +50,7 @@ export const projectController = {
 
   async remove(c: Context) {
     const user = c.get('user');
-    const id = c.req.param('id') as string;
+    const { id } = paramsIdSchema.parse(c.req.param());
     const ip = c.get('clientIp');
     await projectService.softDeleteProject(user.id, id, ip);
     return new Response(null, { status: 204 });
@@ -54,7 +58,7 @@ export const projectController = {
 
   async restore(c: Context) {
     const user = c.get('user');
-    const id = c.req.param('id') as string;
+    const { id } = paramsIdSchema.parse(c.req.param());
     const ip = c.get('clientIp');
     await projectService.restoreProject(user.id, id, ip);
     return c.json({ success: true });

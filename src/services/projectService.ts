@@ -50,7 +50,6 @@ export const projectService = {
       action: 'project.updated',
       entityType: 'project',
       entityId: id,
-      changes: { before: existing, after: project },
       ipAddress,
     });
 

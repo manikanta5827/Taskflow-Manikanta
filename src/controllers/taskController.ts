@@ -18,17 +18,31 @@ const createTaskSchema = z.object({
 
 const updateTaskSchema = createTaskSchema.partial();
 
+const queryListTasksSchema = z.object({
+  status: z.enum(['TODO', 'IN_PROGRESS', 'DONE']).optional(),
+  assignee: z.string().uuid().optional(),
+  search: z.string().optional(),
+});
+
+const paramsIdSchema = z.object({
+  id: z.string().uuid(),
+});
+
 export const taskController = {
   async list(c: Context) {
-    const projectId = c.req.param('id') as string;
-    const { status, assignee, search } = c.req.query();
-    const tasks = await taskService.listTasks(projectId, { status, assigneeId: assignee, search });
+    const { id: projectId } = paramsIdSchema.parse(c.req.param());
+    const query = queryListTasksSchema.parse(c.req.query());
+    const tasks = await taskService.listTasks(projectId, {
+      status: query.status,
+      assigneeId: query.assignee,
+      search: query.search,
+    });
     return c.json(tasks);
   },
 
   async create(c: Context) {
     const user = c.get('user');
-    const projectId = c.req.param('id') as string;
+    const { id: projectId } = paramsIdSchema.parse(c.req.param());
     const body = await c.req.json();
     const data = createTaskSchema.parse(body);
     const ip = c.get('clientIp');
@@ -38,7 +52,7 @@ export const taskController = {
 
   async update(c: Context) {
     const user = c.get('user');
-    const id = c.req.param('id') as string;
+    const { id } = paramsIdSchema.parse(c.req.param());
     const body = await c.req.json();
     const data = updateTaskSchema.parse(body);
     const ip = c.get('clientIp');
@@ -48,7 +62,7 @@ export const taskController = {
 
   async remove(c: Context) {
     const user = c.get('user');
-    const id = c.req.param('id') as string;
+    const { id } = paramsIdSchema.parse(c.req.param());
     const ip = c.get('clientIp');
     await taskService.softDeleteTask(user.id, id, ip);
     return new Response(null, { status: 204 });
@@ -56,14 +70,14 @@ export const taskController = {
 
   async restore(c: Context) {
     const user = c.get('user');
-    const id = c.req.param('id') as string;
+    const { id } = paramsIdSchema.parse(c.req.param());
     const ip = c.get('clientIp');
     await taskService.restoreTask(user.id, id, ip);
     return c.json({ success: true });
   },
 
   async getLogs(c: Context) {
-    const id = c.req.param('id') as string;
+    const { id } = paramsIdSchema.parse(c.req.param());
     const logs = await auditLogRepository.findLogs({ entityType: 'task', entityId: id });
     return c.json(logs);
   },
