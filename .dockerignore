@@ -9,6 +9,7 @@ Dockerfile
 !.env.example
 dist
 logs
+*.log
 coverage
 *.log
 .npm
