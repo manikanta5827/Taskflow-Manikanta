@@ -1,9 +1,10 @@
-FROM oven/bun:1.1.3 AS builder
+FROM oven/bun:1 AS builder
 WORKDIR /app
 
-# Install dependencies
+# Install dependencies with BuildKit cache
 COPY package.json bun.lockb* ./
-RUN bun install --frozen-lockfile
+RUN --mount=type=cache,id=bun,target=/root/.bun/install/cache \
+    bun install --frozen-lockfile
 
 # Generate Prisma client
 COPY prisma ./prisma
@@ -14,15 +15,16 @@ COPY . .
 RUN bun build ./src/index.ts --target=bun --outfile=dist/index.js
 
 # Production Stage
-FROM oven/bun:1.1.3-slim AS runner
+FROM oven/bun:1-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=8080
 
-# Install ONLY production dependencies (needed for Prisma CLI migrations)
+# Copy necessary files from builder
 COPY package.json bun.lockb* ./
-RUN bun install --production
+RUN --mount=type=cache,id=bun,target=/root/.bun/install/cache \
+    bun install --production
 
 # Copy the generated bundle and prisma files
 COPY --from=builder /app/dist/index.js ./dist/index.js

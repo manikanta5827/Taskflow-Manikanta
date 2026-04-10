@@ -1,8 +1,5 @@
-version: '3.8'
-
 services:
   db:
-    name: taskflow-db
     image: postgres:15-alpine
     restart: always
     environment:
@@ -20,7 +17,6 @@ services:
       retries: 5
 
   api:
-    name: taskflow-api
     build:
       context: .
       dockerfile: Dockerfile
@@ -36,21 +32,7 @@ services:
       db:
         condition: service_healthy
     healthcheck:
-      test:
-        [
-          'CMD',
-          'apk',
-          'add',
-          '--no-cache',
-          'curl',
-          '&&',
-          'curl',
-          '-f',
-          'http://localhost:8080/health',
-          '||',
-          'exit',
-          '1',
-        ]
+      test: ["CMD", "bun", "-e", "fetch('http://localhost:8080/health').then(r => r.ok ? process.exit(0) : process.exit(1))"]
       interval: 10s
       timeout: 5s
       retries: 3
