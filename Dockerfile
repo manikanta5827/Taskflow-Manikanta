@@ -1,4 +1,4 @@
-FROM oven/bun:1.1.3 as builder
+FROM oven/bun:1.1.3 AS builder
 WORKDIR /app
 
 # Install dependencies
@@ -19,7 +19,7 @@ FROM oven/bun:1.1.3-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=4000
+ENV PORT=8080
 
 # Copy necessary files
 COPY --from=builder /app/node_modules ./node_modules
@@ -30,7 +30,7 @@ COPY --from=builder /app/src ./src
 # Create logs directory
 RUN mkdir logs
 
-EXPOSE 4000
+EXPOSE 8080
 
 # The startup command runs db migrations and starts the app
 CMD ["sh", "-c", "bunx prisma migrate deploy && bunx prisma db seed && bun run src/index.ts"]

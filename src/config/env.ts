@@ -7,7 +7,7 @@ const envSchema = z.object({
   PORT: z
     .string()
     .transform((p) => parseInt(p, 10))
-    .default('4000'),
+    .default('8080'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   LOG_LEVEL: z.string().default('info'),
   LOG_FILE: z.string().default('logs/app.log'),
