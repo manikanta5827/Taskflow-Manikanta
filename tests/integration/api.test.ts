@@ -62,16 +62,16 @@ describe('API Integration Tests', () => {
   const mockToken = jwt.signToken({ userId: 'u1', email: 'test@example.com' });
 
   beforeAll(() => {
-    if (!globalThis.Bun) {
+    if (globalThis.Bun) {
+      (Bun.password as any).hash = jest.fn().mockResolvedValue('hashed_pw');
+      (Bun.password as any).verify = jest.fn().mockResolvedValue(true);
+    } else {
       (globalThis as any).Bun = {
         password: {
           hash: jest.fn().mockResolvedValue('hashed_pw'),
           verify: jest.fn().mockResolvedValue(true)
         }
       };
-    } else {
-      (Bun.password as any).hash = jest.fn().mockResolvedValue('hashed_pw');
-      (Bun.password as any).verify = jest.fn().mockResolvedValue(true);
     }
   });
 
