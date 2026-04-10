@@ -17,13 +17,7 @@ routes.post('/auth/login', rateLimitAuth, authController.login);
 routes.get('/health', systemController.health);
 
 // Protected routes - Apply middleware ONLY to these paths
-const protectedPaths = [
-  '/projects',
-  '/projects/*',
-  '/tasks',
-  '/tasks/*',
-  '/audit-logs'
-];
+const protectedPaths = ['/projects', '/projects/*', '/tasks', '/tasks/*', '/audit-logs'];
 
 protectedPaths.forEach((path) => {
   routes.use(path, authMiddleware, rateLimitGeneral, idempotencyMiddleware);
