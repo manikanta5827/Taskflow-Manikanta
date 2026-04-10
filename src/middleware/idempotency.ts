@@ -1,5 +1,6 @@
 import { Context, Next } from 'hono';
 import { idempotencyRepository } from '../repositories/idempotencyRepository.js';
+import { logger } from '../config/logger.js';
 
 export const idempotencyMiddleware = async (c: Context, next: Next) => {
   if (c.req.method !== 'POST' && c.req.method !== 'PATCH') {
@@ -36,7 +37,7 @@ export const idempotencyMiddleware = async (c: Context, next: Next) => {
           response: body,
         });
       } catch (e) {
-        // ignore
+        logger.error('Failed to store idempotency response', e);
       }
     }
   }
