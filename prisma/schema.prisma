@@ -26,18 +26,18 @@ enum TaskPriority {
 }
 
 model User {
-  id               String            @id @default(uuid()) @db.Uuid
-  name             String
-  email            String            @unique
-  password         String
-  role             Role              @default(MEMBER)
-  createdAt        DateTime          @default(now())
-  deletedAt        DateTime?         
-  
-  projectsOwned    Project[]         @relation("ProjectOwner")
-  tasksAssigned    Task[]            @relation("TaskAssignee")
-  auditLogs        AuditLog[]
-  idempotencyKeys  IdempotencyKey[]
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String
+  email     String    @unique
+  password  String
+  role      Role      @default(MEMBER)
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  projectsOwned   Project[]        @relation("ProjectOwner")
+  tasksAssigned   Task[]           @relation("TaskAssignee")
+  auditLogs       AuditLog[]
+  idempotencyKeys IdempotencyKey[]
 
   @@index([email])
   @@index([deletedAt])
@@ -45,15 +45,15 @@ model User {
 }
 
 model Project {
-  id          String   @id @default(uuid()) @db.Uuid
+  id          String    @id @default(uuid()) @db.Uuid
   name        String
   description String?
-  ownerId     String   @db.Uuid
-  createdAt   DateTime @default(now())
+  ownerId     String    @db.Uuid
+  createdAt   DateTime  @default(now())
   deletedAt   DateTime?
-  
-  owner       User     @relation("ProjectOwner", fields: [ownerId], references: [id])
-  tasks       Task[]   
+
+  owner User   @relation("ProjectOwner", fields: [ownerId], references: [id])
+  tasks Task[]
 
   @@index([ownerId])
   @@index([deletedAt])
@@ -71,10 +71,10 @@ model Task {
   dueDate     DateTime?    @db.Date
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
-  deletedAt   DateTime?    
-  
-  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  assignee    User?        @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  deletedAt   DateTime?
+
+  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee User?   @relation("TaskAssignee", fields: [assigneeId], references: [id])
 
   @@index([projectId, status])
   @@index([assigneeId])
@@ -83,16 +83,16 @@ model Task {
 }
 
 model AuditLog {
-  id          String   @id @default(uuid()) @db.Uuid
-  userId      String   @db.Uuid
-  action      String
-  entityType  String
-  entityId    String   @db.Uuid
-  changes     Json?
-  ipAddress   String?
-  timestamp   DateTime @default(now())
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  action     String
+  entityType String
+  entityId   String   @db.Uuid
+  changes    Json?
+  ipAddress  String?
+  timestamp  DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@index([entityType, entityId])
   @@index([userId])
@@ -106,7 +106,7 @@ model IdempotencyKey {
   response  Json
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([createdAt])
