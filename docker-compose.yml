@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: taskflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d taskflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "4000:4000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgrespassword@db:5432/taskflow?connection_limit=25
+      - JWT_SECRET=supersecretkey_for_docker_testing
+      - JWT_EXPIRY=24h
+      - PORT=4000
+      - NODE_ENV=production
+      - LOG_LEVEL=info
+      - LOG_FILE=logs/app.log
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "apk", "add", "--no-cache", "curl", "&&", "curl", "-f", "http://localhost:4000/health", "||", "exit", "1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - api_logs:/app/logs
+
+volumes:
+  postgres_data:
+  api_logs:

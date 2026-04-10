@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  OWNER
+  MEMBER
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model User {
+  id               String            @id @default(uuid()) @db.Uuid
+  name             String
+  email            String            @unique
+  password         String
+  role             Role              @default(MEMBER)
+  createdAt        DateTime          @default(now())
+  deletedAt        DateTime?         
+  
+  projectsOwned    Project[]         @relation("ProjectOwner")
+  tasksAssigned    Task[]            @relation("TaskAssignee")
+  auditLogs        AuditLog[]
+  idempotencyKeys  IdempotencyKey[]
+
+  @@index([email])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model Project {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  description String?
+  ownerId     String   @db.Uuid
+  createdAt   DateTime @default(now())
+  deletedAt   DateTime?
+  
+  owner       User     @relation("ProjectOwner", fields: [ownerId], references: [id])
+  tasks       Task[]   
+
+  @@index([ownerId])
+  @@index([deletedAt])
+  @@map("projects")
+}
+
+model Task {
+  id          String       @id @default(uuid()) @db.Uuid
+  title       String
+  description String?
+  status      TaskStatus   @default(TODO)
+  priority    TaskPriority @default(MEDIUM)
+  projectId   String       @db.Uuid
+  assigneeId  String?      @db.Uuid
+  dueDate     DateTime?    @db.Date
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?    
+  
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee    User?        @relation("TaskAssignee", fields: [assigneeId], references: [id])
+
+  @@index([projectId, status])
+  @@index([assigneeId])
+  @@index([deletedAt])
+  @@map("tasks")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @db.Uuid
+  action      String
+  entityType  String
+  entityId    String   @db.Uuid
+  changes     Json?
+  ipAddress   String?
+  timestamp   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
+
+model IdempotencyKey {
+  id        String   @id
+  userId    String   @db.Uuid
+  response  Json
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("idempotency_keys")
+}

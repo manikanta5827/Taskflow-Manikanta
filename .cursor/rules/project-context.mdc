@@ -1,0 +1,33 @@
+---
+description: Central architectural context for the Taskflow backend API
+globs:
+  - "src/**/*.ts"
+alwaysApply: true
+---
+
+# Taskflow Backend Context
+
+You are working on the Taskflow Backend API, a production-ready system for handling users, projects, and tasks.
+
+## Tech Stack
+- **Language**: TypeScript (Strict Mode)
+- **Runtime**: Bun
+- **Framework**: Hono
+- **Database**: PostgreSQL mapped via Prisma ORM
+- **Testing**: Jest (`bun run test`)
+- **Linting**: Prettier + ESLint + Husky Hooks (`bun run lint`, `bun run format`)
+- **Containerization**: Docker Compose
+
+## Architecture (`src/`)
+We use a layered thin-controller pattern. NEVER bleed business logic into controllers.
+- `controllers/`: Strictly for HTTP parsing/responses mapping requests to services.
+- `services/`: Holds core business logic.
+- `repositories/`: Exclusively interacts with Prisma (Database isolation layer).
+- `middleware/`: Handles Auth (JWT), Formatted Error Handlers, Idempotency, RBAC, and Rate Limiting.
+
+## Core Rules
+- **No Node.js `fs`/`path` imports unless necessary**: Rely on Bun's API when native.
+- **Passwords**: Hashed exclusively utilizing `Bun.password` with `algorithm: 'bcrypt'`.
+- **Soft Deletions**: Always use the `deletedAt` DateTime instead of destructive deletes. Filter out `deletedAt != null` in repositories.
+- **Idempotency**: `Idempotency-Key` headers cache responses for POST/PATCH endpoints.
+- **Pre-commit**: Remember that Husky verifies Conventional Commits (e.g. `feat: `, `fix: `).
