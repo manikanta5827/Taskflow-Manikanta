@@ -3,8 +3,8 @@ import { auditService } from './auditService';
 import { NotFoundError } from '../utils/errors';
 
 export const projectService = {
-  async listProjects(userId: string) {
-    return projectRepository.findForUser(userId);
+  async listProjects(userId: string, skip: number = 0, take: number = 10) {
+    return projectRepository.findForUser(userId, skip, take);
   },
 
   async getProject(id: string) {

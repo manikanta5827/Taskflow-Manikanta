@@ -13,11 +13,14 @@ export const projectRepository = {
     });
   },
 
-  async findForUser(userId: string) {
+  async findForUser(userId: string, skip: number = 0, take: number = 10) {
     return prisma.project.findMany({
       where: {
         OR: [{ ownerId: userId }, { tasks: { some: { assigneeId: userId } } }],
       },
+      skip,
+      take,
+      orderBy: { createdAt: 'desc' },
     });
   },
 

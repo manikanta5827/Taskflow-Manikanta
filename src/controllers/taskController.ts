@@ -22,6 +22,8 @@ const queryListTasksSchema = z.object({
   status: z.enum(['TODO', 'IN_PROGRESS', 'DONE']).optional(),
   assignee: z.string().uuid().optional(),
   search: z.string().optional(),
+  page: z.string().optional().transform((v) => (v ? parseInt(v, 10) : 1)),
+  limit: z.string().optional().transform((v) => (v ? parseInt(v, 10) : 10)),
 });
 
 const paramsIdSchema = z.object({
@@ -32,11 +34,17 @@ export const taskController = {
   async list(c: Context) {
     const { id: projectId } = paramsIdSchema.parse(c.req.param());
     const query = queryListTasksSchema.parse(c.req.query());
-    const tasks = await taskService.listTasks(projectId, {
-      status: query.status,
-      assigneeId: query.assignee,
-      search: query.search,
-    });
+    const skip = (query.page - 1) * query.limit;
+    const tasks = await taskService.listTasks(
+      projectId,
+      {
+        status: query.status,
+        assigneeId: query.assignee,
+        search: query.search,
+      },
+      skip,
+      query.limit
+    );
     return c.json(tasks);
   },
 

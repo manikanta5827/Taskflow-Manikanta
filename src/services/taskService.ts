@@ -5,8 +5,8 @@ import { emailService } from './emailService';
 import { NotFoundError } from '../utils/errors';
 
 export const taskService = {
-  async listTasks(projectId: string, filters: any) {
-    return taskRepository.findByProject(projectId, filters);
+  async listTasks(projectId: string, filters: any, skip: number = 0, take: number = 10) {
+    return taskRepository.findByProject(projectId, filters, skip, take);
   },
 
   async createTask(userId: string, projectId: string, data: any, ipAddress: string) {
@@ -102,5 +102,9 @@ export const taskService = {
     });
 
     return { success: true };
+  },
+
+  async getProjectStats(projectId: string) {
+    return taskRepository.getStatsByProject(projectId);
   },
 };

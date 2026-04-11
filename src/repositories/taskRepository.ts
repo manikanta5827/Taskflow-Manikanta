@@ -15,7 +15,9 @@ export const taskRepository = {
 
   async findByProject(
     projectId: string,
-    filters: { status?: any; assigneeId?: string; search?: string }
+    filters: { status?: any; assigneeId?: string; search?: string },
+    skip: number = 0,
+    take: number = 10
   ) {
     const where: Prisma.TaskWhereInput = {
       projectId,
@@ -27,7 +29,12 @@ export const taskRepository = {
       where.title = { contains: filters.search, mode: 'insensitive' };
     }
 
-    return prisma.task.findMany({ where });
+    return prisma.task.findMany({
+      where,
+      skip,
+      take,
+      orderBy: { createdAt: 'desc' },
+    });
   },
 
   async update(id: string, data: Prisma.TaskUpdateInput) {
@@ -43,5 +50,31 @@ export const taskRepository = {
       where: { id },
       include: { project: true },
     });
+  },
+
+  async getStatsByProject(projectId: string) {
+    const [statusStats, assigneeStats] = await Promise.all([
+      prisma.task.groupBy({
+        by: ['status'],
+        where: { projectId },
+        _count: { id: true },
+      }),
+      prisma.task.groupBy({
+        by: ['assigneeId'],
+        where: { projectId },
+        _count: { id: true },
+      }),
+    ]);
+
+    return {
+      byStatus: statusStats.reduce(
+        (acc, curr) => ({ ...acc, [curr.status]: curr._count.id }),
+        {}
+      ),
+      byAssignee: assigneeStats.reduce(
+        (acc, curr) => ({ ...acc, [curr.assigneeId || 'unassigned']: curr._count.id }),
+        {}
+      ),
+    };
   },
 };
