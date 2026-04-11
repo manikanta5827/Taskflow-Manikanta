@@ -1,123 +1,88 @@
+<div align="center">
+
 # TaskFlow Backend
 
-A production-ready task management system built with Bun, Hono, and PostgreSQL.
-Designed for Zomato Greening India as a take-home assignment.
+A simple and reliable way to manage projects and track team tasks.
 
-## 1. Overview
+</div>
 
-TaskFlow is a robust task and project management backend API. It leverages modern, high-performance web tooling (Bun/Hono), strict TypeScript, and the Prisma ORM.
+## 1. What is TaskFlow?
 
-## 2. Features Implemented
+TaskFlow helps teams stay organized. It's a backend system where you can create projects, add tasks, and assign them to people. We've built in some smart features to make sure everything stays secure and easy to track.
 
-- **Full REST API** for Users, Projects, and Tasks
-- **Role-Based Access Control (RBAC)**: Enforces OWNER/MEMBER/ADMIN permissions.
-- **In-Memory Rate Limiting**: Dedicated auth, task, and general sliding-window protection.
-- **Permanent Deletion**: Strictly enforces data integrity via hard deletes (removed soft-delete).
-- **Audit Logging**: Captures state changes, task reassignments, and deletion events with IP tracking.
-- **Idempotency Keys**: Safely handles retries on POST/PATCH endpoints via global middleware.
-- **Zod Validation**: Strict schema-based input validation for all routes and parameters.
-- **Hono JWT**: Standardized authentication using Hono's native JWT helper.
-- **Prisma 7**: Modernized ORM configuration with `prisma.config.ts`.
-- **Mocked Notifications**: Simulates emails correctly placed in audit flows.
+### What you can do:
 
-## 3. Quick Start
+- **Sign up and Log in**: Secure accounts with different roles. Some people can own projects, while others just help out.
+- **Organize Projects**: Create a space for your project and see how it's doing with quick stats.
+- **Track Tasks**: Break work down into tasks. You can set priorities, due dates, and see exactly who's working on what.
+- **Reliable History**: Every time a task's status changes or someone else takes it over, we keep a log so you don't lose track.
+- **Safe Retries**: If a request fails and you try again, we make sure it doesn't create duplicate data.
 
-### Prerequisites
+## 2. Quick Start
 
-- Docker & Docker Compose
-- Bun (latest) (optional if purely using Docker)
+### What you need:
 
-### Setup
+- Docker and Docker Compose
+- Bun (if you want to run it without Docker)
+
+### How to run it:
 
 ```bash
 git clone <repo>
 cd taskflow-backend
 cp .env.example .env
 
-# Fire up the completely pre-configured multi-container setup
+# Start everything at once
 docker-compose up -d --build
 ```
 
-**API Base URL**: `http://localhost:8080`
+**Access the API**: `http://localhost:8080`
 
-**Test Credentials:** (From Prisma Seed)
+**Login for testing:**
 
-- **Email**: test@example.com
-- **Password**: password123
+- **Email**: `test@example.com`
+- **Password**: `password123`
 
-## 4. Architecture Decisions
+## 3. How it's built
 
-- **Hono over Express**: Hono is fundamentally designed for edge compute and web standards (`Request`/`Response`), making it blindingly fast on Bun.
-- **Folder Structure**: Segmenting logic into Repositories -> Services -> Controllers ensures testable boundaries and DRY code.
-- **Hard Deletes**: Requirement check confirmed that permanent deletion is preferred for this specific deployment stage to simplify data lifecycles.
-- **In-Memory Rate Limiting**: Provides immediate protection without external infrastructure overhead like Redis for this tier.
+- **Fast & Modern**: We used **Bun** and **Hono** to keep things quick.
+- **Safe Data**: **Prisma** helps us keep the database organized and error-free.
+- **Smart Security**: Passwords are hashed safely, and we use JWT tokens to keep you logged in.
+- **Abuse Protection**: We've included rate limiting so the system doesn't get overloaded.
 
-## 5. API Documentation
+## 4. API Details
 
-_Auth Endpoints_
+If you're a developer and want to see all the endpoints and how to use them, check out the [API Documentation](api.md).
 
-- `POST /auth/register` (body: name, email, password)
-- `POST /auth/login` (body: email, password)
+## 5. Running it manually
 
-_Project Endpoints_ (Require Bearer Token)
-
-- `GET /projects`
-- `POST /projects`
-- `GET /projects/:id`
-- `PATCH /projects/:id` (idempotency support)
-- `DELETE /projects/:id`
-
-_Task Endpoints_ (Require Bearer Token)
-
-- `GET /projects/:id/tasks?status=TODO&assignee=UUID&search=hello`
-- `POST /projects/:id/tasks`
-- `PATCH /tasks/:id`
-- `DELETE /tasks/:id`
-- `GET /tasks/:id/logs` (Audit logs for specific task)
-
-_System Endpoints_
-
-- `GET /health` -> 200/503
-- `GET /audit-logs?entityType=task`
-
-## 6. Running Locally
-
-If you want to run via source directly:
+If you don't want to use Docker, you can run it directly:
 
 ```bash
+# Install what's needed
 bun install
-docker compose up db -d # Ensure DB is running
-bun run prisma:migrate:deploy
+
+# Setup the database
+bun run prisma:migrate
+bun run prisma:generate
 bun run prisma:seed
+
+# Start the server
 bun run dev
 ```
 
-To view logs: `tail -f logs/app.log`
+You can check the logs at `logs/app.log`.
 
-## 7. Database Schema
+## 6. Ideas for the future
 
-Models are interconnected via strict UUID foreign keys.
+- **Real Database for Cache**: Use Redis to handle high traffic even better.
+- **Better Search**: Add tools like Elasticsearch to help find tasks faster.
+- **Email Notifications**: Switch from fake emails to real ones using a service like SES.
+- **Task Connections**: Let tasks depend on each other (e.g., "don't start this until that is done").
 
-- **Permanent Deletion**: Data is wiped upon deletion confirmation. No `deletedAt` flags are used.
-- **Indexing**: Extensive indexing on composite keys (e.g. `projectId + status`) and foreign keys handles query distribution cleanly.
+## 7. Testing
 
-## 8. What I'd Do With More Time
+We've written a lot of tests to make sure everything works properly.
 
-- **Distributed Caching/Redis**: Switch idempotency and rate limiting to Redis so it correctly blocks repeated calls across horizontally scaled pods.
-- **Pagination**: The `GET` endpoints can easily be overloaded. Adding cursor-based Prisma pagination would resolve this immediately.
-- **Websockets/SSE**: Replace mocked emails with pushed realtime state changes for the UI.
-- **Task Dependencies**: "Task A must finish before Task B" modeling in Prisma.
-
-## 9. Testing
-
-Testing relies on Jest and Supertest.
-
-- Run tests: `bun run test`
-- Current theoretical coverage hits critical controller logic and database validations.
-
-## 10. Security Measures
-
-- **Hashing**: Strong bcrypt integration (cost 12 default).
-- **JWT**: Token expiries enforced tightly with isolated secrets.
-- **SQLi**: Escaped natively by Prisma queries.
-- **Overfetching**: Thin controllers returning specific objects instead of broad datasets.
+- **Run tests**: `bun run test`
+- **Just integration tests**: `bun run test:integration`
