@@ -11,9 +11,7 @@ class RateLimiter {
   constructor(
     private readonly windowMs: number,
     private readonly maxRequests: number
-  ) {
-    setInterval(() => this.cleanup(), windowMs);
-  }
+  ) {}
 
   private cleanup() {
     const now = Date.now();
@@ -29,6 +27,7 @@ class RateLimiter {
 
   public check(key: string): boolean {
     const now = Date.now();
+    // Lazy cleanup of specific key
     let logs = this.store.get(key) || [];
     logs = logs.filter((log) => now - log.timestamp < this.windowMs);
 

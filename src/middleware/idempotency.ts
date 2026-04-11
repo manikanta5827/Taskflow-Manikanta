@@ -8,6 +8,12 @@ export const idempotencyMiddleware = async (c: Context, next: Next) => {
     return await next();
   }
 
+  // Prevent multiple executions for the same request
+  if (c.get('idempotency_run')) {
+    return await next();
+  }
+  c.set('idempotency_run', true);
+
   const key = c.req.header('Idempotency-Key');
   if (!key) {
     return await next();
@@ -18,13 +24,8 @@ export const idempotencyMiddleware = async (c: Context, next: Next) => {
     return await next();
   }
 
-  // Construct composite key: key + userId + method + resource (stripped path params/query)
-  // We prefer routePath template, stripping :param segments.
-  const route = c.req.routePath || '';
-  const resource =
-    route.replace(/\/:[^/]+/g, '') ||
-    c.req.path.replace(/\/[0-9a-fA-F-]{36}/g, '').replace(/\/$/, '') ||
-    '/';
+  // Construct composite key: key + userId + method + resource (raw path and query)
+  const resource = c.req.path + (c.req.url.includes('?') ? '?' + c.req.url.split('?')[1] : '');
   const compositeKey = `${key}:${user.id}:${method}:${resource}`;
 
   const existing = await idempotencyRepository.findById(compositeKey);

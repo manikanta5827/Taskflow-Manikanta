@@ -3,21 +3,26 @@ import { jest, describe, it, expect, beforeEach, beforeAll } from '@jest/globals
 import { app } from '../../src/index';
 import * as jwt from '../../src/utils/jwt';
 
+// UUID constants for consistency
+const USER_ID = '550e8400-e29b-41d4-a716-446655440000';
+const USER2_ID = '550e8400-e29b-41d4-a716-446655440001';
+const PROJECT_ID = 'e82b7c6c-cf70-496e-a3b0-68afb1234567';
+const TASK_ID = 'f42b7c6c-cf70-496e-a3b0-68afb7654321';
+
 // Mock DB Repositories
 jest.mock('../../src/repositories/userRepository', () => ({
   userRepository: {
     create: jest.fn(),
     findByEmail: jest.fn(),
-    findActiveById: jest.fn(),
+    findById: jest.fn(),
   },
 }));
 
 jest.mock('../../src/repositories/projectRepository', () => ({
   projectRepository: {
     create: jest.fn(),
-    findActiveById: jest.fn(),
     findById: jest.fn(),
-    findActiveForUser: jest.fn(),
+    findForUser: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
   },
@@ -26,9 +31,9 @@ jest.mock('../../src/repositories/projectRepository', () => ({
 jest.mock('../../src/repositories/taskRepository', () => ({
   taskRepository: {
     create: jest.fn(),
-    findActiveById: jest.fn(),
     findById: jest.fn(),
-    findActiveByProject: jest.fn(),
+    findByProject: jest.fn(),
+    getStatsByProject: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
   },
@@ -56,7 +61,7 @@ import { idempotencyRepository } from '../../src/repositories/idempotencyReposit
 
 describe('API Integration Tests', () => {
   const dummyUser = {
-    id: 'u1',
+    id: USER_ID,
     name: 'Test',
     email: 'test@example.com',
     password: 'hashed_pw',
@@ -65,7 +70,7 @@ describe('API Integration Tests', () => {
   let mockToken: string;
 
   beforeAll(async () => {
-    mockToken = await jwt.signToken({ userId: 'u1', email: 'test@example.com' });
+    mockToken = await jwt.signToken({ userId: USER_ID, email: 'test@example.com' });
     if (globalThis.Bun) {
       (Bun.password as any).hash = jest.fn().mockResolvedValue('hashed_pw');
       (Bun.password as any).verify = jest.fn().mockResolvedValue(true);
@@ -81,7 +86,7 @@ describe('API Integration Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (userRepository.findActiveById as jest.Mock).mockResolvedValue(dummyUser);
+    (userRepository.findById as jest.Mock).mockResolvedValue(dummyUser);
   });
 
   it('1. should register a new user successfully', async () => {
@@ -123,10 +128,10 @@ describe('API Integration Tests', () => {
   });
 
   it('3. should enforce RBAC (non-owner cannot update project)', async () => {
-    const dummyProject = { id: 'p1', name: 'Proj 1', ownerId: 'u2' }; // User is u1, owner is u2
+    const dummyProject = { id: PROJECT_ID, name: 'Proj 1', ownerId: USER2_ID };
     (projectRepository.findById as jest.Mock).mockResolvedValue(dummyProject);
 
-    const res = await app.request('/projects/p1', {
+    const res = await app.request(`/projects/${PROJECT_ID}`, {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${mockToken}`,
@@ -139,41 +144,46 @@ describe('API Integration Tests', () => {
   });
 
   it('4. should delete project permanently', async () => {
-    const dummyProject = { id: 'p1', name: 'Proj 1', ownerId: 'u1' };
+    const dummyProject = { id: PROJECT_ID, name: 'Proj 1', ownerId: USER_ID };
     (projectRepository.findById as jest.Mock).mockResolvedValue(dummyProject);
     (projectRepository.remove as jest.Mock).mockResolvedValue(dummyProject);
 
-    const res = await app.request('/projects/p1', {
+    const res = await app.request(`/projects/${PROJECT_ID}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${mockToken}` },
     });
     expect(res.status).toBe(204);
-    expect(projectRepository.remove).toHaveBeenCalledWith('p1');
+    expect(projectRepository.remove).toHaveBeenCalledWith(PROJECT_ID);
   });
 
   it('5. should filter tasks by status and assignee', async () => {
-    (taskRepository.findActiveByProject as jest.Mock).mockResolvedValue([
-      { id: 't1', status: 'DONE' },
+    (taskRepository.findByProject as jest.Mock).mockResolvedValue([
+      { id: TASK_ID, status: 'DONE' },
     ]);
 
-    const res = await app.request('/projects/p1/tasks?status=DONE&assignee=u1', {
+    const res = await app.request(`/projects/${PROJECT_ID}/tasks?status=DONE&assignee=${USER_ID}`, {
       method: 'GET',
       headers: { Authorization: `Bearer ${mockToken}` },
     });
 
     expect(res.status).toBe(200);
-    expect(taskRepository.findActiveByProject).toHaveBeenCalledWith('p1', {
-      status: 'DONE',
-      assigneeId: 'u1',
-      search: undefined,
-    });
+    expect(taskRepository.findByProject).toHaveBeenCalledWith(
+      PROJECT_ID,
+      {
+        status: 'DONE',
+        assigneeId: USER_ID,
+        search: undefined,
+      },
+      0,
+      10
+    );
   });
 
   it('6. should respect Idempotency-Key and cache response', async () => {
     const dummyProject = {
-      id: 'p1',
+      id: PROJECT_ID,
       name: 'Proj 1',
-      ownerId: 'u1',
+      ownerId: USER_ID,
       description: 'Test Proj',
       createdAt: new Date().toISOString(),
     };
@@ -193,15 +203,15 @@ describe('API Integration Tests', () => {
     });
     expect(res1.status).toBe(201);
     const body1 = await res1.json();
-    expect(body1.id).toBe('p1');
+    expect(body1.id).toBe(PROJECT_ID);
 
-    // Provide mocked caching logic - matching the composite key construction: key:userId:method:resource
-    const compositeKey = 'key-789:u1:POST:/projects';
+    // Provide mocked caching logic - matching key:userId:method:resource
+    const compositeKey = `key-789:${USER_ID}:POST:/projects`;
     (idempotencyRepository.findById as jest.Mock).mockImplementation((id) => {
       if (id === compositeKey) {
         return Promise.resolve({
           id: compositeKey,
-          userId: 'u1',
+          userId: USER_ID,
           response: dummyProject,
         });
       }
@@ -222,27 +232,26 @@ describe('API Integration Tests', () => {
     expect(res2.status).toBe(200);
     const body2 = (await res2.json()) as any;
     expect(body2.cache).toBe(true);
-    expect(body2.id).toBe('p1');
+    expect(body2.id).toBe(PROJECT_ID);
   });
 
   it('7. should isolate idempotency keys between users', async () => {
-    const compositeKeyUser1 = 'shared-key:u1:POST:/projects';
-    const compositeKeyUser2 = 'shared-key:u2:POST:/projects';
+    const compositeKeyUser1 = `shared-key:${USER_ID}:POST:/projects`;
 
-    const dummyProject = { id: 'p-new', name: 'New' };
+    const dummyProject = { id: PROJECT_ID, name: 'New' };
     (projectRepository.create as jest.Mock).mockResolvedValue(dummyProject);
 
-    // Mock hits for u1 but miss for u2
+    // Mock hits for user 1 but miss for user 2
     (idempotencyRepository.findById as jest.Mock).mockImplementation((id) => {
       if (id === compositeKeyUser1) {
-        return Promise.resolve({ response: { id: 'p1', name: 'Existing' } });
+        return Promise.resolve({ response: { id: PROJECT_ID, name: 'Existing' } });
       }
       return Promise.resolve(null);
     });
 
     // User 2 makes a request with the same key
-    const mockToken2 = await jwt.signToken({ userId: 'u2', email: 'test2@example.com' });
-    (userRepository.findActiveById as jest.Mock).mockResolvedValue({ id: 'u2' });
+    const mockToken2 = await jwt.signToken({ userId: USER2_ID, email: 'test2@example.com' });
+    (userRepository.findById as jest.Mock).mockResolvedValue({ id: USER2_ID });
 
     const res = await app.request('/projects', {
       method: 'POST',
@@ -260,20 +269,20 @@ describe('API Integration Tests', () => {
   });
 
   it('8. should support idempotency for PATCH requests', async () => {
-    const dummyProject = { id: 'p1', name: 'Updated Name', ownerId: 'u1' };
+    const dummyProject = { id: PROJECT_ID, name: 'Updated Name', ownerId: USER_ID };
     (projectRepository.findById as jest.Mock).mockResolvedValue(dummyProject);
     (projectRepository.update as jest.Mock).mockResolvedValue(dummyProject);
 
-    const compositeKey = 'patch-key:u1:PATCH:/projects'; // /projects/:id -> /projects
+    const compositeKey = `patch-key:${USER_ID}:PATCH:/projects/${PROJECT_ID}`;
 
     (idempotencyRepository.findById as jest.Mock).mockImplementation((id) => {
       if (id === compositeKey) {
-        return Promise.resolve({ response: { id: 'p1', name: 'Cached Name' } });
+        return Promise.resolve({ response: { id: PROJECT_ID, name: 'Cached Name' } });
       }
       return Promise.resolve(null);
     });
 
-    const res = await app.request('/projects/p1', {
+    const res = await app.request(`/projects/${PROJECT_ID}`, {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${mockToken}`,
@@ -290,30 +299,36 @@ describe('API Integration Tests', () => {
   });
 
   it('9. should delete task permanently', async () => {
-    const dummyTask = { id: 't1', title: 'Task 1', projectId: 'p1' };
+    const dummyProject = { id: PROJECT_ID, name: 'Proj 1', ownerId: USER_ID };
+    const dummyTask = {
+      id: TASK_ID,
+      title: 'Task 1',
+      projectId: PROJECT_ID,
+      project: dummyProject, // Required for RBAC middleware
+    };
+
     (taskRepository.findById as jest.Mock).mockResolvedValue(dummyTask);
+    (projectRepository.findById as jest.Mock).mockResolvedValue(dummyProject);
     (taskRepository.remove as jest.Mock).mockResolvedValue(dummyTask);
 
-    const res = await app.request('/tasks/t1', {
+    const res = await app.request(`/tasks/${TASK_ID}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${mockToken}` },
     });
 
     expect(res.status).toBe(204);
-    expect(taskRepository.remove).toHaveBeenCalledWith('t1');
+    expect(taskRepository.remove).toHaveBeenCalledWith(TASK_ID);
   });
 
   it('10. should return project stats', async () => {
     const dummyStats = {
       byStatus: { DONE: 5, TODO: 2 },
-      byAssignee: { u1: 3, unassigned: 4 },
+      byAssignee: { 'John Doe': 3, unassigned: 4 },
     };
-    // Need to mock the new method added to taskRepository
-    import('../../src/repositories/taskRepository').then((m) => {
-      m.taskRepository.getStatsByProject = jest.fn().mockResolvedValue(dummyStats);
-    });
+    (taskRepository.getStatsByProject as jest.Mock).mockResolvedValue(dummyStats);
+    (projectRepository.findById as jest.Mock).mockResolvedValue({ id: PROJECT_ID, ownerId: USER_ID });
 
-    const res = await app.request('/projects/p1/stats', {
+    const res = await app.request(`/projects/${PROJECT_ID}/stats`, {
       method: 'GET',
       headers: { Authorization: `Bearer ${mockToken}` },
     });
@@ -331,17 +346,18 @@ describe('API Integration Tests', () => {
       headers: { Authorization: `Bearer ${mockToken}` },
     });
 
-    expect(projectRepository.findForUser).toHaveBeenCalledWith('u1', 5, 5);
+    expect(projectRepository.findForUser).toHaveBeenCalledWith(USER_ID, 5, 5);
   });
 
   it('12. should support pagination for tasks', async () => {
     (taskRepository.findByProject as jest.Mock).mockResolvedValue([]);
+    (projectRepository.findById as jest.Mock).mockResolvedValue({ id: PROJECT_ID });
 
-    await app.request('/projects/p1/tasks?page=3&limit=2', {
+    await app.request(`/projects/${PROJECT_ID}/tasks?page=3&limit=2`, {
       method: 'GET',
       headers: { Authorization: `Bearer ${mockToken}` },
     });
 
-    expect(taskRepository.findByProject).toHaveBeenCalledWith('p1', expect.any(Object), 4, 2);
+    expect(taskRepository.findByProject).toHaveBeenCalledWith(PROJECT_ID, expect.any(Object), 4, 2);
   });
 });
