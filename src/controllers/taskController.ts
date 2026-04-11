@@ -22,8 +22,14 @@ const queryListTasksSchema = z.object({
   status: z.enum(['TODO', 'IN_PROGRESS', 'DONE']).optional(),
   assignee: z.string().uuid().optional(),
   search: z.string().optional(),
-  page: z.string().optional().transform((v) => (v ? parseInt(v, 10) : 1)),
-  limit: z.string().optional().transform((v) => (v ? parseInt(v, 10) : 10)),
+  page: z
+    .string()
+    .optional()
+    .transform((v) => (v ? parseInt(v, 10) : 1)),
+  limit: z
+    .string()
+    .optional()
+    .transform((v) => (v ? parseInt(v, 10) : 10)),
 });
 
 const paramsIdSchema = z.object({
