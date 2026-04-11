@@ -82,10 +82,7 @@ export const taskRepository = {
     );
 
     return {
-      byStatus: statusStats.reduce(
-        (acc, curr) => ({ ...acc, [curr.status]: curr._count.id }),
-        {}
-      ),
+      byStatus: statusStats.reduce((acc, curr) => ({ ...acc, [curr.status]: curr._count.id }), {}),
       byAssignee: assigneeStats.reduce((acc, curr) => {
         const key = curr.assigneeId ? userMap[curr.assigneeId] || 'Unknown' : 'unassigned';
         return { ...acc, [key]: curr._count.id };
