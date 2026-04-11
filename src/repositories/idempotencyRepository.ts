@@ -6,9 +6,9 @@ export const idempotencyRepository = {
     return prisma.idempotencyKey.create({ data });
   },
 
-  async findByIdAndUser(id: string, userId: string) {
-    return prisma.idempotencyKey.findFirst({
-      where: { id, userId },
+  async findById(id: string) {
+    return prisma.idempotencyKey.findUnique({
+      where: { id },
     });
   },
 

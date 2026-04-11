@@ -3,7 +3,8 @@ import { idempotencyRepository } from '../repositories/idempotencyRepository';
 import { logger } from '../config/logger';
 
 export const idempotencyMiddleware = async (c: Context, next: Next) => {
-  if (c.req.method !== 'POST' && c.req.method !== 'PATCH') {
+  const method = c.req.method;
+  if (method !== 'POST' && method !== 'PATCH') {
     return await next();
   }
 
@@ -17,9 +18,18 @@ export const idempotencyMiddleware = async (c: Context, next: Next) => {
     return await next();
   }
 
-  const existing = await idempotencyRepository.findByIdAndUser(key, user.id);
+  // Construct composite key: key + userId + method + resource (stripped path params/query)
+  // We prefer routePath template, stripping :param segments.
+  const route = c.req.routePath || '';
+  const resource =
+    route.replace(/\/:[^/]+/g, '') ||
+    c.req.path.replace(/\/[0-9a-fA-F-]{36}/g, '').replace(/\/$/, '') ||
+    '/';
+  const compositeKey = `${key}:${user.id}:${method}:${resource}`;
+
+  const existing = await idempotencyRepository.findById(compositeKey);
   if (existing) {
-    return c.json(existing.response as any);
+    return c.json({ ...(existing.response as object), cache: true });
   }
 
   await next();
@@ -32,7 +42,7 @@ export const idempotencyMiddleware = async (c: Context, next: Next) => {
       try {
         const body = JSON.parse(bodyText);
         await idempotencyRepository.create({
-          id: key,
+          id: compositeKey,
           userId: user.id,
           response: body,
         });
