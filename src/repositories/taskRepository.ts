@@ -66,12 +66,30 @@ export const taskRepository = {
       }),
     ]);
 
+    // Fetch names for assignees
+    const assigneeIds = assigneeStats
+      .map((s) => s.assigneeId)
+      .filter((id): id is string => id !== null);
+
+    const users = await prisma.user.findMany({
+      where: { id: { in: assigneeIds } },
+      select: { id: true, name: true },
+    });
+
+    const userMap = users.reduce(
+      (acc, user) => ({ ...acc, [user.id]: user.name }),
+      {} as Record<string, string>
+    );
+
     return {
-      byStatus: statusStats.reduce((acc, curr) => ({ ...acc, [curr.status]: curr._count.id }), {}),
-      byAssignee: assigneeStats.reduce(
-        (acc, curr) => ({ ...acc, [curr.assigneeId || 'unassigned']: curr._count.id }),
+      byStatus: statusStats.reduce(
+        (acc, curr) => ({ ...acc, [curr.status]: curr._count.id }),
         {}
       ),
+      byAssignee: assigneeStats.reduce((acc, curr) => {
+        const key = curr.assigneeId ? userMap[curr.assigneeId] || 'Unknown' : 'unassigned';
+        return { ...acc, [key]: curr._count.id };
+      }, {}),
     };
   },
 };
