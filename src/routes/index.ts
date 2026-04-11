@@ -34,6 +34,7 @@ routes.post('/projects', projectController.create);
 routes.get('/projects/:id', projectController.get);
 routes.patch('/projects/:id', requireProjectOwner, projectController.update);
 routes.delete('/projects/:id', requireProjectOwner, projectController.remove);
+routes.get('/projects/:id/stats', projectController.getStats);
 
 // Task routes
 routes.get('/projects/:id/tasks', taskController.list);
