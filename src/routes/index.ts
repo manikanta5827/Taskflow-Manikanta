@@ -11,9 +11,11 @@ import { AppVariables } from '../types/index';
 
 export const routes = new Hono<{ Variables: AppVariables }>();
 
+// Auth routes
 routes.post('/auth/register', rateLimitAuth, authController.register);
 routes.post('/auth/login', rateLimitAuth, authController.login);
 
+// Health check route
 routes.get('/health', systemController.health);
 
 // Protected routes - Apply middleware ONLY to these paths
@@ -23,14 +25,17 @@ protectedPaths.forEach((path) => {
   routes.use(path, authMiddleware, rateLimitGeneral, idempotencyMiddleware);
 });
 
+// Audit logs route for admin only
 routes.get('/audit-logs', requireRole(['ADMIN']), systemController.getAuditLogs);
 
+// Project routes
 routes.get('/projects', projectController.list);
 routes.post('/projects', projectController.create);
 routes.get('/projects/:id', projectController.get);
 routes.patch('/projects/:id', requireProjectOwner, projectController.update);
 routes.delete('/projects/:id', requireProjectOwner, projectController.remove);
 
+// Task routes
 routes.get('/projects/:id/tasks', taskController.list);
 routes.post('/projects/:id/tasks', rateLimitTask, requireProjectOwner, taskController.create);
 

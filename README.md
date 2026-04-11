@@ -10,15 +10,15 @@ TaskFlow is a robust task and project management backend API. It leverages moder
 ## 2. Features Implemented
 
 - **Full REST API** for Users, Projects, and Tasks
-- **Role-Based Access Control (RBAC)**: Enforces OWNER/MEMBER permissions.
-- **In-Memory Rate Limiting**: Dedicated auth, task, and general boundaries.
-- **Soft Deletion**: Implemented seamlessly via `deletedAt` timestamps.
-- **Audit Logging**: Captures state changes, task reassignments, and deletion logs.
-- **Idempotency Keys**: Safely handles retries on POST/PATCH endpoints.
+- **Role-Based Access Control (RBAC)**: Enforces OWNER/MEMBER/ADMIN permissions.
+- **In-Memory Rate Limiting**: Dedicated auth, task, and general sliding-window protection.
+- **Permanent Deletion**: Strictly enforces data integrity via hard deletes (removed soft-delete).
+- **Audit Logging**: Captures state changes, task reassignments, and deletion events with IP tracking.
+- **Idempotency Keys**: Safely handles retries on POST/PATCH endpoints via global middleware.
+- **Zod Validation**: Strict schema-based input validation for all routes and parameters.
+- **Hono JWT**: Standardized authentication using Hono's native JWT helper.
+- **Prisma 7**: Modernized ORM configuration with `prisma.config.ts`.
 - **Mocked Notifications**: Simulates emails correctly placed in audit flows.
-- **Search & Filtering**: Comprehensive task querying.
-- **Connection Pooling**: PostgreSQL URL configured properly.
-- **Security Check**: Properly hashes passwords via bcryptjs.
 
 ## 3. Quick Start
 
@@ -47,10 +47,10 @@ docker-compose up -d --build
 
 ## 4. Architecture Decisions
 
-- **Hono over Express**: Hono is fundamentally designed for edge compute and web standards (`Request`/`Response`), making it blindingly fast on Bun and extremely lightweight.
+- **Hono over Express**: Hono is fundamentally designed for edge compute and web standards (`Request`/`Response`), making it blindingly fast on Bun.
 - **Folder Structure**: Segmenting logic into Repositories -> Services -> Controllers ensures testable boundaries and DRY code.
-- **Soft Deletes**: Important for accountability and data recovery in an enterprise app like a reforestation initiative.
-- **In-Memory Rate Limiting**: Redis is preferable in cluster environments, but for simplicity and reducing external dependencies in this tier, an in-memory sliding window provides immediate protection without infrastructure overhead.
+- **Hard Deletes**: Requirement check confirmed that permanent deletion is preferred for this specific deployment stage to simplify data lifecycles.
+- **In-Memory Rate Limiting**: Provides immediate protection without external infrastructure overhead like Redis for this tier.
 
 ## 5. API Documentation
 
@@ -66,7 +66,6 @@ _Project Endpoints_ (Require Bearer Token)
 - `GET /projects/:id`
 - `PATCH /projects/:id` (idempotency support)
 - `DELETE /projects/:id`
-- `POST /projects/:id/restore`
 
 _Task Endpoints_ (Require Bearer Token)
 
@@ -74,7 +73,7 @@ _Task Endpoints_ (Require Bearer Token)
 - `POST /projects/:id/tasks`
 - `PATCH /tasks/:id`
 - `DELETE /tasks/:id`
-- `POST /tasks/:id/restore`
+- `GET /tasks/:id/logs` (Audit logs for specific task)
 
 _System Endpoints_
 
@@ -87,9 +86,9 @@ If you want to run via source directly:
 
 ```bash
 bun install
-docker-compose up db -d # Ensure DB is running
-bunx prisma migrate deploy
-bunx prisma db seed
+docker compose up db -d # Ensure DB is running
+bun run prisma:migrate:deploy
+bun run prisma:seed
 bun run dev
 ```
 
@@ -99,8 +98,8 @@ To view logs: `tail -f logs/app.log`
 
 Models are interconnected via strict UUID foreign keys.
 
-- **Soft Deletes**: Used across `projects` and `tasks` to avoid dangling references while keeping statistical accuracy.
-- **Indexing**: Extensive indexing on composite keys (e.g. `projectId + status`) handles query distribution cleanly.
+- **Permanent Deletion**: Data is wiped upon deletion confirmation. No `deletedAt` flags are used.
+- **Indexing**: Extensive indexing on composite keys (e.g. `projectId + status`) and foreign keys handles query distribution cleanly.
 
 ## 8. What I'd Do With More Time
 
