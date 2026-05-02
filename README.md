@@ -80,6 +80,8 @@ You can check the logs at `logs/app.log`.
 - **Email Notifications**: Switch from fake emails to real ones using a service like SES.
 - **Task Connections**: Let tasks depend on each other (e.g., "don't start this until that is done").
 
+
+
 ## 7. Testing
 
 We've written a lot of tests to make sure everything works properly.
